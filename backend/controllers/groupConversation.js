@@ -1,4 +1,6 @@
-const Message = require('../models/message')
+const { Sequelize } = require('sequelize');
+const Message = require('../models/message');
+const Op = Sequelize.Op;
 
 
 // const convertIntoSeconds = (time) => {
@@ -17,10 +19,20 @@ exports.postGroupMessage = async (req, res, next) => {
     }
 }
 
-exports.getGroupMessage = async(req, res, next) => {
+exports.getGroupMessage = async (req, res, next) => {
+    const lastMsgId = req.query.lastMsgId;
+    console.log(lastMsgId);
     const groupId = req.params.groupId;
     try {
-        const messages = await Message.findAll({ where: { sent_to_groupId: groupId } })
+        const messages = await Message.findAll({
+            where: {
+                sent_to_groupId: groupId,
+                id: {
+                    [Op.gt]:lastMsgId,
+                }
+
+            }
+        })
         res.status(200).json({ messages: messages, reqUserId:req.user.id, success: true, message: 'messages fetched successfully' })
     } catch (err) {
         console.log(err)

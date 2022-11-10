@@ -1,3 +1,4 @@
+
 function notifyUser(message) {
   const container = document.getElementById("container");
   const notification = document.createElement("div");
@@ -11,9 +12,7 @@ function notifyUser(message) {
 const form__newGroup = document.getElementById("form__newGroup");
 form__newGroup.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const newGroupData = {
-    group_name: document.getElementById("newGroup__input").value,
-  };
+  const newGroupData = {group_name: document.getElementById("newGroup__input").value};
   try {
     const response = await axios.post(`http://localhost:5000/newGroup`,newGroupData,
     { headers: { authorization: `Bearer ${localStorage.getItem("token")}` } }
@@ -27,7 +26,7 @@ form__newGroup.addEventListener("submit", async (e) => {
 window.addEventListener("DOMContentLoaded", ready);
 
 function ready() {
-   //----------fetch All groups
+   //------------------------fetch All groups----------------------//
    let groups = document.getElementById("groups");
    function addYourGroupsToScreen(contact) {
     let groupsDiv = `<div class="single__group" id="${contact.groupId}">
@@ -60,14 +59,14 @@ function ready() {
                                   </div>`;
       getAllMessagesOfThisGroup(groupId);
 
+      // setInterval(getAllMessagesOfThisGroup(groupId), 1000);
+
       const displaychat = document.getElementById('display__chat');
       displaychat.addEventListener('click', showGroupInfo);
-    }
-    else if (e.target.classList.contains('othersGroups')) {
-        notifyUser('You are not part of this till Now. You can join this group by clicking on "join button"..');
       }
-    
-  
+      
+
+    //---------------------send messages--------------------------//
     const submitForm = document.getElementById("send__message__form");
     submitForm.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -76,12 +75,18 @@ function ready() {
         sent_to_groupNo: document.getElementsByClassName("msgText")[0].id,
       };
 
+      const groupId = document.getElementsByClassName("msgText")[0].id;
+      //getAllMessagesOfThisGroup(groupId);
+    
       document.getElementsByClassName("msgText")[0].value = "";
       axios
-        .post("http://localhost:5000/sendGroupMessage", groupMsgData, {headers: { authorization: `Bearer ${localStorage.getItem("token")}`},})
+        .post("http://localhost:5000/sendGroupMessage", groupMsgData, { headers: { authorization: `Bearer ${localStorage.getItem("token")}` }, })
         .then((response) => {
+          const msgStoredInLocalStorage = JSON.parse(localStorage.getItem(`${groupId}`) || "[]");
+          msgStoredInLocalStorage.push(response.data.messageInfo);
+          localStorage.setItem(`${response.data.messageInfo.sent_to_groupId}`, JSON.stringify(msgStoredInLocalStorage));
           addMesaageToChat(response.data.messageInfo.message_text);
-        });
+        }).catch(err => console.log(err));
     });
   });
 }
@@ -95,35 +100,64 @@ function addMesaageToChat(msg) {
 }
 
 const getAllMessagesOfThisGroup = async (groupId) => {
-  const response = await axios.get(
-    `http://localhost:5000/getGroupMessages/${groupId}`,
-    { headers: { authorization: `Bearer ${localStorage.getItem("token")}` } }
-  );
-  console.log(response);
-  let actualChat = document.getElementsByClassName("actual__chat")[0];
-  const messageArr = response.data.messages;
-  //console.log(messageArr);
+  //--------------Old messages from local storage-------//
+  const msgStoredInLocalStorage = JSON.parse(localStorage.getItem(`${groupId}`) || "[]");
+  const yourUserId = localStorage.getItem('userId');
 
-  messageArr.forEach((messageData) => {
-    if (messageData.userId != response.data.reqUserId) {
-      //console.log('in recivers section');
-      let recieversMessage = `<div class="others__message msgs">
-                     <h5 class="message_sender_name">${messageData.message_sender_name}:</h5>
-                     <h4>${messageData.message_text}</h4>
-                     <p>timestamp</p></div>`;
-      actualChat.innerHTML += recieversMessage;
-    } else {
-      //console.log('in senders section');
-      let sendersMessage = `<div class="my__message msgs">
-                     <h4>${messageData.message_text}</h4>
-                     <p>timestamp</p></div>`;
-      actualChat.innerHTML += sendersMessage;
-    }
-  });
+  console.log(yourUserId);
+  if (msgStoredInLocalStorage.length > 0) {
+    msgStoredInLocalStorage.forEach((messageData) => {
+      showGroupMsgOnScreen(messageData, yourUserId);
+    });
+  }
+  
+  //-------new messages from network call---------//
+  //setInterval(async(groupId)=>{await newMessagesFromNetworkCall(groupId)}, 3000);
+  newMessagesFromNetworkCall(groupId)
 };
 
+async function newMessagesFromNetworkCall(groupId) {
+  //-------new messages from network call---------//
+  const msgStoredInLocalStorage = JSON.parse(localStorage.getItem(`${groupId}`) || "[]");
+  const lastMsgId = msgStoredInLocalStorage.length === 0 ? 0 : msgStoredInLocalStorage[msgStoredInLocalStorage.length - 1].id;
 
-//----group info-----and Add Members to group(Admin Access)----
+  const response = await axios.get(
+    `http://localhost:5000/getGroupMessages/${groupId}?lastMsgId=${lastMsgId}`,
+    { headers: { authorization: `Bearer ${localStorage.getItem("token")}` } });
+  localStorage.setItem('userId', response.data.reqUserId);
+  
+  const newMessageArr = response.data.messages;
+  const nowAllMsgsArr = [...msgStoredInLocalStorage, ...newMessageArr];
+  localStorage.setItem(`${groupId}`, JSON.stringify(nowAllMsgsArr));
+  
+  console.log(newMessageArr);
+
+  if (newMessageArr.length > 0) {
+    newMessageArr.forEach((messageData) => {
+      showGroupMsgOnScreen(messageData, response.data.reqUserId);
+    });
+  }
+}
+
+function showGroupMsgOnScreen(messageData, yourUserId) {
+  let actualChat = document.getElementsByClassName("actual__chat")[0];
+
+  if (messageData.userId != yourUserId) {
+    let recieversMessage = `<div class="others__message msgs">
+                   <h5 class="message_sender_name">${messageData.message_sender_name}:</h5>
+                   <h4>${messageData.message_text}</h4>
+                   <p>timestamp</p></div>`;
+    actualChat.innerHTML += recieversMessage;
+  } else {
+    let sendersMessage = `<div class="my__message msgs">
+                   <h4>${messageData.message_text}</h4>
+                   <p>timestamp</p></div>`;
+    actualChat.innerHTML += sendersMessage;
+  }
+  
+}
+
+//-----------------------Group Info---Admin Superpowers(add,remove,make otheradmin, remove from admin)------//
 function showGroupInfo(e) {
   if (e.target.id === "person__name") {
     console.log('No Group Selected');
@@ -165,6 +199,8 @@ function showGroupInfo(e) {
     
     const groupDetail__section = document.getElementById("groupDetail__section");
     groupDetail__section.addEventListener('click', (e) => {
+      
+      //-------------------Admin => Make other users as Admin-------------------// 
       if (e.target.classList.contains('adminBtn') && e.target.classList.contains('false')) {
         axios.post('http://localhost:5000/makeAdmin', { targetId: e.target.id ,groupId:groupId}, { headers: { authorization: `Bearer ${localStorage.getItem("token")}` } })
           .then(res => console.log(res))
@@ -172,12 +208,14 @@ function showGroupInfo(e) {
         
       }
 
+      //---------------------Admin => Remove other admin from admin, but peron will still group member----//
       if (e.target.classList.contains('adminBtn') && e.target.classList.contains('true')) {
         axios.post('http://localhost:5000/removeAdmin', { targetId:e.target.id ,groupId:groupId}, { headers: { authorization: `Bearer ${localStorage.getItem("token")}` } })
           .then(res => console.log(res))
           .catch(err=>console.log(err))
       }
 
+      //----------------------Admin => Remove existing member from group----//
       if (e.target.classList.contains('removeUser')) {
         console.log('remove user clicked', e.target.id);
         axios.post('http://localhost:5000/removeMember', { targetId: e.target.id ,groupId:groupId}, { headers: { authorization: `Bearer ${localStorage.getItem("token")}` } })
@@ -185,6 +223,7 @@ function showGroupInfo(e) {
           .catch(err=>console.log(err))
       }
 
+      //---------------Group member => wants to leave group---------------//
       if (e.target.classList.contains('leave__group')) {
         axios.post('http://localhost:5000/leaveGroup', {groupId:groupId}, { headers: { authorization: `Bearer ${localStorage.getItem("token")}` } })
           .then(res => console.log(res.data.message))
@@ -192,7 +231,7 @@ function showGroupInfo(e) {
       }
     })
     
-    
+    //---------------Admin => Add new members-----------------------------//
     const add_new_memberForm = document.getElementById('add_new_memberForm');
     add_new_memberForm.addEventListener('submit',(e)=> {
       e.preventDefault();
