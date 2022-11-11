@@ -58,12 +58,22 @@
                         
                     </div>
                 </div>
-                <div class="send__message">
-                  <form action="" method="post" id="send__message__form">
-                    <input type="text" class="msgtext" placeholder="Write Your Mesaage">
-                    <button type="submit">➤</button>
-                  </form>
+                <div class="send_MediaOrMsg">
+                    <button id="showSendMediaForm">✉</button>
+                    <div class="send__media" id="sendMediaSection">
+                        <form action="" method="post" id="media__form">
+                            <input type="file" src="" alt="" name="fileFromSender">
+                            <input type="submit" value="⇑" id="media__submitBtn">
+                        </form>
+                    </div>
+                    <div class="send__message">
+                      <form action="" method="post" id="send__message__form">
+                        <input type="text" class="msgtext" placeholder="Write Your Mesaage">
+                        <button type="submit">➤</button>
+                      </form>
+                    </div>
                 </div>
+                
             </div>
         </div>
     </main>

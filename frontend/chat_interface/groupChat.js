@@ -51,11 +51,21 @@ function ready() {
                                     <div class="actual__chat">
                                     </div>
                                   </div>
-                                  <div class="send__message">
-                                    <form action="" method="post" id="send__message__form">
-                                    <input type="text" id="${groupId}" class="msgText" placeholder="Write Your Mesaage">
-                                    <button type="submit" id="message_send_button">➤</button>
-                                    </form>
+
+                                  <div class="send_MediaOrMsg">
+                                    <button id="showSendMediaForm">✉</button>
+                                    <div class="send__media" id="sendMediaSection">
+                                      <form action="" method="post" id="media__form">
+                                        <input type="file" id="real_file" class="${groupId}" name="fileFromSender">
+                                        <input type="submit" value="⇑" id="${groupId}" >
+                                      </form>
+                                    </div>
+                                    <div class="send__message">
+                                      <form action="" method="post" id="send__message__form">
+                                        <input type="text" id="${groupId}" class="msgText" placeholder="Write Your Mesaage">
+                                        <button type="submit" id="message_send_button">➤</button>
+                                      </form>
+                                     </div>
                                   </div>`;
       getAllMessagesOfThisGroup(groupId);
 
@@ -64,6 +74,38 @@ function ready() {
       const displaychat = document.getElementById('display__chat');
       displaychat.addEventListener('click', showGroupInfo);
       }
+      
+
+    //---------------------send media------------------------------//
+      const showSendMediaFormBtn = document.getElementById('showSendMediaForm');
+      showSendMediaFormBtn.addEventListener('click', (e)=> {
+        //console.log(e.target);
+        const showSendMediaForm = document.getElementById('sendMediaSection');
+        console.log('media button clicked');
+        showSendMediaForm.classList.toggle('mediaFormActive');
+      });
+
+      const sendMediaForm = document.getElementById('media__form');
+      sendMediaForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const selectedFile = document.getElementById('real_file').value;
+        const groupId= document.getElementById('real_file').className;
+        if (!selectedFile) {
+          console.log('No file selected !!');
+          return
+        } else {
+          console.log('groupId: ', groupId);
+          const formData = new FormData(sendMediaForm);
+          for (let key of formData.keys()) {
+            console.log(key, formData.get(key).name);
+          }
+
+
+
+          
+        }
+      })
+
       
 
     //---------------------send messages--------------------------//
