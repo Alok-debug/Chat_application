@@ -62,7 +62,7 @@ function ready() {
 
                                   <div class="send_MediaOrMsg">
                                     <button id="showSendMediaForm">✉</button>
-                                    <div class="send__media" id="sendMediaSection">
+                                    <div class="send__media" id="sendMediaSection" >
                                       <form action="" method="post" id="media__form">
                                         <input type="file" id="real_file" class="${groupId}" name="file" >
                                         <input type="submit" value="⇑" id="${groupId}" >

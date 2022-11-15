@@ -205,13 +205,13 @@
     padding: 0.09rem 1.1rem;
 }
 
-/* #sendMediaSection{
-    display: none;
-} */
-
-.mediaFormActive{
+#sendMediaSection{
     display: none;
 }
+
+/* .mediaFormActive{
+    display: none;
+} */
 
 
 .send_MediaOrMsg{

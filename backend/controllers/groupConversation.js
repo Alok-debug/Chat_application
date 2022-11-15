@@ -6,13 +6,11 @@ const S3Services = require("../services/s3Services");
 
 exports.postMedia = async (req, res, next) => {
     try {
-        console.log('req recieved');
         
-        console.log('formdata files', req.files.file);
         console.log('formdata files data', req.files.file.data);
         
-        const formData = req.files;
-        console.log(formData);
+        const uploadedfiles = req.files;
+        
         for (let key of formData.keys()) {
             console.log('inside formData', formData.get(key));
         }
@@ -20,8 +18,8 @@ exports.postMedia = async (req, res, next) => {
     //const mediaPath = await req.file;
     const groupId = req.params.groupId;
     const userId = req.user.id;
-    // const fileName = req.body.fileName;              //`${groupId}${userId}/${new Date()}`;
-    // const mediaLink = await S3Services.uploadToS3(fileName, stringified);
+    const fileName = `${userId}/${new Date()}`;
+    const mediaLink = await S3Services.uploadToS3(fileName, uploadedfiles);
     // await req.user.createDownload({
     //   fileName: `${new Date()}`,
     //   link: `${mediaLink}`,
